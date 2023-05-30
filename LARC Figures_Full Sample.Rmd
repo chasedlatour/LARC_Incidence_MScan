@@ -1,0 +1,235 @@
+---
+title: "LARC Figures"
+author: "Chase Latour"
+date: "01/27/2023"
+output: 
+  html_document:
+    toc: true
+    toc_depth: 3
+    toc_float: true
+    code_folding: hide
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+
+library(tidyverse)
+library(haven)
+library(kableExtra)
+```
+
+
+
+# Upload data
+
+Here, we upload the data for the **100% sample** of the MarketScan data. The results presented in this document represent numbers for the full patient sample in MarketScan. 
+
+```{r}
+
+# Full sample for the primary analysis
+data_strat <- read_sas("/local/projects/marketscanccae/larc_descrip/data/full/analysis/age_strat_terr_std_my.sas7bdat")
+
+data_overall <- read_sas("/local/projects/marketscanccae/larc_descrip/data/full/analysis/overall_incidence_primary.sas7bdat")
+
+data_year_inc <- read_sas("/local/projects/marketscanccae/larc_descrip/data/full/analysis/primary_year_overall.sas7bdat")
+
+# Full sample for the sensitivity analysis - These aren't run yet in the full sample
+
+data_overall_sens <- read_sas("/local/projects/marketscanccae/larc_descrip/data/full/analysis/sens_incidence_primary.sas7bdat")
+ 
+data_year_inc_sens <- read_sas("/local/projects/marketscanccae/larc_descrip/data/full/analysis/sens_year_overall.sas7bdat")
+
+```
+
+# Cohort Inclusion Criteria
+
+These analyses include individuals who are recorded as Female in MarketScan claims data, between 15 and 54 years of age, and had continuous enrollment in MarketScan for at least 180 days between June 1, 2009 and December 31, 2020. We allowed a 7-day gap in coverage for a time period to represent continuous enrollment. An individual was included in the denominator for a month if their continuous enrollment period overlapped at all with that month.
+
+For these analyses, we have not considered occurrence of pregnancy, hysterectomy, or LARC reinsertion code for defining our cohort.
+
+The data contained herein were derived on the full patient set contained within MarketScan.
+
+# LARC Identification
+
+LARC insertions and removals were identified via Current Procedural Terminology (CPT) codes and Healthcare Common Procedure Coding Systems (HCPCS) coes. CPT codes indicated the procedure, and HCPCS were used to identify LARC type.
+
+New LARC use was identified as a first LARC CPT insertion code in the period without a LARC removal code in the 180 days preceding the insertion. LARC insertions were required to have both a CPT code (to indicate the insertion) and a HCPCS code (to classify the device). A maximum 180-day gap was allowed between these codes to ensure that they described a single incident event. 
+
+# Primary Analysis
+
+## Annual Incidence
+
+**Table 1.** Incidence of new LARC insertions from January 2010 through December 2020. All estimates are month-level estimates that have been averaged over each month within a year. 
+
+```{r}
+
+data_year_inc %>% 
+  select(year, n, crude_mean_inc, std_mean_inc, hcpcimp_pct, hcpchiud_pct, hcpcnhiud_pct) %>%
+  arrange(year) %>% 
+  group_by(year) %>% 
+  kable(col.names = c("Year", "Average Persons Per Month", "Average Crude Incidence per 10,000 people",
+                      "Average Standardized Incidence per 10,000 People", "Proportion Implants",
+                      "Proportion Hormonal IUDs", "Proportion Non-Hormonal IUDs"),
+        align = "lcccccc",
+        caption = "Annual LARC Insertion Incidence, 2010-2020") %>% 
+  kable_classic(html_font = "Times New Roman", position = "left") %>% 
+  footnote(general = "All estimates of incidence are standardized to the age and territory distribution of January 2010.")
+  #kable_styling(bootstrap_options = "striped")
+
+```
+
+## Overall LARC Incidence Plot
+
+**Figure 1** Month-level incidence of new LARC insertions. Estimates are standardized to the age and territory distribution in January 2010. The red, dashed line represents March 2020, the first month when lockdowns were implemented for the SARS-CoV2 pandemic in the U.S.
+
+```{r}
+#bitmap("FIG1.tiff",width=140, height=140, units='mm',type='tifflzw',res=600)
+data_overall %>% 
+  ggplot(aes(x = time_counter, y = std_incidence)) +
+  geom_line()+
+  scale_y_continuous(name = "LARC Insertion Incidence (per 10,000 People)",
+                     limits = c(0,20)) +
+  scale_x_continuous(name = "Time (January of each Year)",
+                   breaks = c(1, 13, 25, 37, 49, 61,
+                              73, 85, 97, 109, 121),
+                   labels = c("2010","2011","2012","2013","2014","2015",
+                              "2016","2017","2018","2019","2020")) + 
+  ggtitle("Monthly LARC Insertion Incidence, 2010-2020") +
+  #labs(caption = "Incidence estimates are standardized to the age and territory distribution of January 2010.") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, color = 'black'),
+        axis.title.x = element_text(vjust = -0.5, color = 'black'),
+        axis.text.y = element_text(color='black')) +
+#  theme(axis.text.x = element_text(angle = 45, vjust = 0.5), text=element_text(family="Times New Roman"),
+#        axis.title.x = element_text(vjust = -0.5)) +
+  geom_vline(xintercept = 123, lty = "dashed", col="black")
+#dev.off()
+
+```
+
+## Overall LARC Incidence Plot for 2020
+
+
+```{r}
+
+#bitmap("FIG1_2020.tiff",width=140, height=100, units='mm',type='tifflzw',res=600)
+data_overall %>% 
+  filter(year == 2020) %>% 
+  ggplot(aes(x = time_counter, y = std_incidence)) +
+  geom_line()+
+  scale_y_continuous(name = "LARC Insertion Incidence (per 10,000 People)",
+                     limits = c(0,20)) +
+  scale_x_continuous(name = "Month of 2020",
+                   breaks = c(121, 122, 123 ,124, 125, 126, 
+                              127, 128, 129, 130, 131, 132),
+                   labels = c("January", "February","March", "April",
+                              "May", "June", "July", "August", "September",
+                              "October", "November", "December")) + 
+  #ggtitle("Monthly LARC Insertion Incidence, 2020 Only") +
+  #labs(caption = "Incidence estimates are standardized to the age and territory distribution of January 2010.") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, color = 'black'),
+        axis.title.x = element_text(vjust = -0.5, color = 'black'),
+        axis.text.y = element_text(color='black')) +
+#  theme(axis.text.x = element_text(angle = 45, vjust = 0.5), text=element_text(family="Times New Roman"),
+#        axis.title.x = element_text(vjust = -0.5)) +
+  geom_vline(xintercept = 123, lty = "dashed", col="black")
+#dev.off()
+
+```
+
+## Age-Stratified LARC Incidence Plot
+
+
+**Figure 2.** Month-level incidence of new LARC insertions, stratified by age categories. Estimates are standardized to the territory distribution in January 2010. The red, dashed line represents March 2020, the beginning of the month first affected by the SARS-CoV2 pandemic.
+
+```{r}
+
+#bitmap("SFIG2.tiff",width=190, height=140, units='mm',type='tifflzw',res=600)
+data_strat %>% 
+  mutate(age_character = case_when(agecat == 1 ~ "15-19 Years",
+                                   agecat == 2 ~ "20-24 Years",
+                                   agecat == 3 ~ "25-29 Years",
+                                   agecat == 4 ~ "30-34 Years",
+                                   agecat == 5 ~ "35-39 Years",
+                                   agecat == 6 ~ "40-44 Years",
+                                   agecat == 7 ~ "45-49 Years",
+                                   agecat == 8 ~ "50-54 Years",
+                                   agecat == 9 ~ "55-59 Years",
+                                   agecat == 10 ~ "60-64 Years")) %>% 
+  filter(agecat < 9) %>% 
+  ggplot(aes(x = time_counter, y = age_strat_incidence_10000)) +
+  geom_line()+
+  scale_y_continuous(name = "LARC Insertion Incidence (per 10,000 People)",
+                     limits = c(0,50)) +
+  scale_x_continuous(name = "Time (January of each Year)",
+                   breaks = c(1, 13, 25, 37, 49, 61,
+                              73, 85, 97, 109, 121),
+                   labels = c("2010","2011","2012","2013","2014","2015",
+                              "2016","2017","2018","2019","2020")) + 
+  facet_wrap(age_character~., scales="free") +
+  ggtitle("Age-Stratified LARC Insertion Incidence, 2010-2020") +
+  #labs(caption = "Incidence estimates are standardized to the age and territory distribution of January 2010.") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, color = 'black'),
+        axis.title.x = element_text(vjust = -0.5, color = 'black'),
+        axis.text.y = element_text(color='black')) +
+  geom_vline(xintercept = 123, lty = "dashed", col="black")
+#dev.off()
+
+```
+
+# Sensivity Analysis
+
+We conducted a sensitivity analysis where LARC insertions were defined via CPT codes only: HCPCS codes were not required, as in the primary analysis. CPT codes indicate that the procedure actually took place. HCPCS code indicate which LARC was inserted, presumably representing the device being ordered. We provide the results of the same analyses from the primary analysis, with LARC insertion defined via CPT codes only.
+
+## Annual Incidence via CPT Codes Only
+
+**Table 2.** Incidence of new LARC insertions from January 2010 through December 2020. All estimates are month-level estimates that have been averaged over each month within a year. 
+
+```{r}
+
+data_year_inc_sens %>% 
+  select(year, n, crude_mean_inc, std_mean_inc) %>%
+  arrange(year) %>% 
+  group_by(year) %>% 
+  kable(col.names = c("Year", "Average Persons Per Month", "Average Crude Incidence",
+                      "Average Standardized Incidence"),
+        align = "lcccccc",
+        caption = "Annual LARC Insertion Incidence, Defined via CPT Codes Only") %>% 
+  kable_classic(html_font = "Times New Roman", position = "left") %>% 
+  footnote(general = "All estimates are standardized to the age and territory distribution of January 2010.")
+  #kable_styling(bootstrap_options = "striped")
+
+```
+
+## Overall LARC Incidence Plot via CPT Codes Only
+
+**Figure 3.** Month-level incidence of new LARC insertions. Estimates are standardized to the age and territory distribution in January 2010. The red, dashed line represents March 2020, the first month when lockdowns were implemented for the SARS-CoV2 pandemic in the U.S.
+
+```{r}
+#bitmap("SFIG3.tiff",width=140, height=140, units='mm',type='tifflzw',res=600)
+data_overall_sens %>% 
+  ggplot(aes(x = time_counter, y = std_incidence)) +
+  geom_line()+
+  scale_y_continuous(name = "LARC Insertion Incidence (per 10,000 People)",
+                     limits = c(0,25)) +
+  scale_x_continuous(name = "Time (January of each Year)",
+                   breaks = c(1, 13, 25, 37, 49, 61,
+                              73, 85, 97, 109, 121),
+                   labels = c("2010","2011","2012","2013","2014","2015",
+                              "2016","2017","2018","2019","2020")) + 
+  ggtitle("Monthly Incidence, 2010-2020, Defined via CPT Codes") +
+#  labs(caption = "Incidence estimates are standardized to the age and territory distribution of January 2010.") +
+  theme_classic() +
+  theme(axis.text.x = element_text(angle = 45, vjust = 0.5, color='black'),
+        axis.title.x = element_text(vjust = -0.5, color='black'),
+        axis.text.y = element_text(color='black')) +
+  geom_vline(xintercept = 123, lty = "dashed", col="black")
+#dev.off()
+
+```
+
+
+
+
