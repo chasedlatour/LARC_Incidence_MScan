@@ -505,67 +505,78 @@ SENSITIVITY ANALYSIS 4 - Vary the continuous enrollment criteria.
 to the macros from there -- this is file 2.
 ****************************************************************************/
 
-*Get the number of individuals identified in the primary analysis enrollment
-criteria - 30 day continuous enrollment, 7 day gap;
-*Get the number of unique people identified.;
-PROC SQL;
-	SELECT COUNT (DISTINCT enrolid)
-	FROM enrlprimary
-	;
-	QUIT;
-*Get the number of qualifying enrollment periods identified;
-PROC SQL;
-	SELECT COUNT (enrolid)
-	FROM enrlprimary
-	;
-	QUIT;
+**Create the enrollment file;
+*Run the macro for each of the included study periods;
+%enr(2009);
+%enr(2010);
+%enr(2011);
+%enr(2012);
+%enr(2013); 
+%enr(2014);
+%enr(2015);
+%enr(2016);
+%enr(2017); 
+%enr(2018);
+%enr(2019);
+%enr(2020);
 
-*30 day continuous enrollment, 30 day gap;
-%contenrl(enrl, enrl3030gap, 30, 30);
-*Get the number of unique people identified.;
-PROC SQL;
-	SELECT COUNT (DISTINCT enrolid)
-	FROM enrl3030gap
+**Now, set these records for all years of interest into one dataset, 
+with one record per person per month with >1 day enrolled.;
+proc sql;
+	create table enrl as
+	select * from enroll2009
+	outer union corr
+	select * from enroll2010
+	outer union corr
+	select * from enroll2011
+	outer union corr
+	select * from enroll2012
+	outer union corr
+	select * from enroll2013
+	outer union corr
+	select * from enroll2014
+	outer union corr
+	select * from enroll2015
+	outer union corr
+	select * from enroll2016
+	outer union corr
+	select * from enroll2017
+	outer union corr
+	select * from enroll2018
+	outer union corr
+	select * from enroll2019
+	outer union corr
+	select * from enroll2020
 	;
-	QUIT;
-*Get the number of qualifying enrollment periods identified;
-PROC SQL;
-	SELECT COUNT (enrolid)
-	FROM enrl3030gap
-	;
-	QUIT;
+	quit;
 
-*30 day continuous enrollment, 1 day gap;
-%contenrl(enrl, enrl130gap, 1, 30);
-*Get the number of unique people identified.;
-PROC SQL;
-	SELECT COUNT (DISTINCT enrolid)
-	FROM enrl130gap
-	;
-	QUIT;
-*Get the number of qualifying enrollment periods identified;
-PROC SQL;
-	SELECT COUNT (enrolid)
-	FROM enrl130gap
-	;
-	QUIT;
+* Look at different continuous enrollment criteria;
 
-*14 day continuous enrollment, 1 day gap;
-%contenrl(enrl, enrl114gap, 1, 14);
-*Get the number of unique people identified.;
-PROC SQL;
-	SELECT COUNT (DISTINCT enrolid)
-	FROM enrl114gap
-	;
-	QUIT;
-*Get the number of qualifying enrollment periods identified;
-PROC SQL;
-	SELECT COUNT (enrolid)
-	FROM enrl114gap
-	;
-	QUIT;
+**Primary definition: 180 days with 7 day gap;
+%contenrl(enrl, enrlprimary, 7, 180);
 
-/****************************************************************************/
+*Count the number of people identified;
+proc sql;
+	select count (distinct enrolid)
+	from enrlprimary
+	; quit;
+
+**Second definition: 90 days with 7 day gap;
+%contenrl(enrl, enrl90, 7, 90);
+
+*Count the number of people identified;
+proc sql;
+	select count (distinct enrolid)
+	from enrl90
+	; quit;
 
 
+**Third definition: 30 days with 7 day gap;
+%contenrl(enrl, enrl30, 7, 30);
+
+*Count the number of people identified;
+proc sql;
+	select count (distinct enrolid)
+	from enrl30
+	; quit;
 
