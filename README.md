@@ -1,5 +1,5 @@
 # LARC_Incidence_MScan
-This code was used for the study Busse, Dissanayake, Latour et al. 2023 to describe trends in new LARC insertion incidence using raw claims data from MarketScan.
+This code was used for the study Busse et al. 2023 (https://pubmed.ncbi.nlm.nih.gov/37823033/) to describe trends in new LARC insertion incidence using raw claims data from Merative's MarketScan Commercial Encounters and Claims Database.
 
 Files are provided for deriving the cohort and analyzing the data.
 
